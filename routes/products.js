@@ -63,7 +63,7 @@ router.post("/", upload.single("image"), async (req, res) => {
   if (!mongoose.isValidObjectId(category)) {
     return res.status(400).json({ message: "invalid category id" });
   }
-  const location = `${req.protocol}://${req.get("host")}/Public/uploads/`;
+  const location = `${req.protocol}://${req.get("host")}/public/uploads/`;
   const path = `${location}${req.file.filename}`;
 
   const product = new Product({
@@ -124,13 +124,13 @@ router.put(
       }
     }
 
-    if (req.file) {
-      const location = `${req.protocol}://${req.get("host")}/Public/uploads/`;
-      const path = `${location}${req.file.filename}`;
+    if (req?.files?.image?.length > 0) {
+      const location = `${req.protocol}://${req.get("host")}/public/uploads/`;
+      const path = `${location}${req.files.image[0].filename}`;
       req.body.path = path;
     }
 
-    if (req.files) {
+    if (req?.files?.images?.length > 0) {
       const filenames = req.files.images.map((image) => image.filename);
       const location = `${req.protocol}://${req.get("host")}/public/uploads/`;
       let paths = [];
