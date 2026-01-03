@@ -12,6 +12,7 @@ const userRouter = require("./routes/users");
 const productRouter = require("./routes/products");
 const orderRouter = require("./routes/orders");
 const categoryRouter = require("./routes/categories");
+const path = require("path");
 
 dotenv.config({ path: ".env" });
 const app = express();
@@ -36,6 +37,7 @@ app.use(cors());
 app.options(/.*/, cors());
 app.use(expressjwt.authJwt());
 
+app.use("/public", express.static(path.join(__dirname, "/public")));
 app.use(`${API}/users`, userRouter);
 app.use(`${API}/products`, productRouter);
 app.use(`${API}/orders`, orderRouter);
