@@ -18,6 +18,7 @@ exports.authJwt = () => {
       { url: /^\/api\/v1\/products.*/, methods: ["GET", "OPTIONS"] },
       { url: /^\/api\/v1\/categories.*/, methods: ["GET", "OPTIONS"] },
       { url: /^\/api\/v1\/users\/get\/count/, methods: ["GET", "OPIONS"] },
+      { url: /^\/public\/uploads\//, methods: ["GET", "OPTIONS"] },
     ],
   });
 };
