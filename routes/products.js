@@ -101,53 +101,71 @@ router.get("/:id", async (req, res) => {
   res.status(200).json({ status: "success", data: { product } });
 });
 
-router.put("/:id", upload.single("image"), async (req, res) => {
-  const { id } = req.params;
-  if (!id) return res.status(404).json({ message: "provide id for product" });
-  if (!mongoose.isValidObjectId(id))
-    return res.status(400).json({ message: "invalid id to get product" });
-  const product = await Product.findById(id);
-  if (!product)
-    return res
-      .status(404)
-      .json({ message: "there is no product with that id" });
-  const { category } = req.body;
-  if (category) {
-    if (!mongoose.isValidObjectId(category)) {
-      return res.status(400).json({ message: "invalid category id" });
+router.put(
+  "/:id",
+  upload.fields([
+    { name: "image", maxCount: 1 },
+    { name: "images", maxCount: 10 },
+  ]),
+  async (req, res) => {
+    const { id } = req.params;
+    if (!id) return res.status(404).json({ message: "provide id for product" });
+    if (!mongoose.isValidObjectId(id))
+      return res.status(400).json({ message: "invalid id to get product" });
+    const product = await Product.findById(id);
+    if (!product)
+      return res
+        .status(404)
+        .json({ message: "there is no product with that id" });
+    const { category } = req.body;
+    if (category) {
+      if (!mongoose.isValidObjectId(category)) {
+        return res.status(400).json({ message: "invalid category id" });
+      }
     }
-  }
 
-  if (req.file) {
-    const location = `${req.protocol}://${req.get("host")}/Public/uploads/`;
-    const path = `${location}${req.file.filename}`;
-    req.body.path = path;
+    if (req.file) {
+      const location = `${req.protocol}://${req.get("host")}/Public/uploads/`;
+      const path = `${location}${req.file.filename}`;
+      req.body.path = path;
+    }
+
+    if (req.files) {
+      const filenames = req.files.images.map((image) => image.filename);
+      const location = `${req.protocol}://${req.get("host")}/public/uploads/`;
+      let paths = [];
+      filenames.map((filename) => {
+        paths.push(`${location}${filename}`);
+      });
+      req.body.images = paths;
+    }
+
+    const updatedProduct = await Product.findByIdAndUpdate(
+      id,
+      {
+        name: req.body.name,
+        description: req.body.description,
+        richDescription: req.body.richDescription,
+        image: req.body.path,
+        images: req.body.images,
+        brand: req.body.brand,
+        price: req.body.price,
+        category: req.body.category,
+        countInStock: req.body.countInStock,
+        rating: req.body.rating,
+        isFeatured: req.body.isFeatured,
+        dateCreated: req.body.dateCreated,
+      },
+      { new: true, runValidators: true }
+    );
+    res.status(200).json({
+      status: "success",
+      data: {
+        product: updatedProduct,
+      },
+    });
   }
-  const updatedProduct = await Product.findByIdAndUpdate(
-    id,
-    {
-      name: req.body.name,
-      description: req.body.description,
-      richDescription: req.body.richDescription,
-      image: req.body.path,
-      images: req.body.images,
-      brand: req.body.brand,
-      price: req.body.price,
-      category: req.body.category,
-      countInStock: req.body.countInStock,
-      rating: req.body.rating,
-      isFeatured: req.body.isFeatured,
-      dateCreated: req.body.dateCreated,
-    },
-    { new: true, runValidators: true }
-  );
-  res.status(200).json({
-    status: "success",
-    data: {
-      product: updatedProduct,
-    },
-  });
-});
+);
 
 router.delete("/:id", async (req, res) => {
   const { id } = req.params;
