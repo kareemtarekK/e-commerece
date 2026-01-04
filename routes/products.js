@@ -5,6 +5,7 @@ const multer = require("multer");
 const crypto = require("crypto");
 const Product = require("./../models/product");
 const User = require("./../models/user");
+const adminOnly = require("./../helpers/adminOnly");
 
 const router = express.Router();
 
@@ -58,6 +59,24 @@ router.get("/", async (req, res) => {
   res.send(products);
 });
 
+router.get("/:id", async (req, res) => {
+  const { id } = req.params;
+  if (!id) return res.status(404).json({ message: "provide id for product" });
+  if (!mongoose.isValidObjectId(id))
+    return res.status(400).json({ message: "invalid id to get product" });
+  const product = await Product.findById(id).populate({
+    path: "category",
+    select: "name icon color",
+  });
+  if (!product)
+    return res
+      .status(404)
+      .json({ message: "there is no product with that id" });
+  res.status(200).json({ status: "success", data: { product } });
+});
+
+router.use(adminOnly);
+
 router.post("/", upload.single("image"), async (req, res) => {
   const { category } = req.body;
   if (!mongoose.isValidObjectId(category)) {
@@ -83,22 +102,6 @@ router.post("/", upload.single("image"), async (req, res) => {
   console.log(5);
   await product.save();
   res.send(product);
-});
-
-router.get("/:id", async (req, res) => {
-  const { id } = req.params;
-  if (!id) return res.status(404).json({ message: "provide id for product" });
-  if (!mongoose.isValidObjectId(id))
-    return res.status(400).json({ message: "invalid id to get product" });
-  const product = await Product.findById(id).populate({
-    path: "category",
-    select: "name icon color",
-  });
-  if (!product)
-    return res
-      .status(404)
-      .json({ message: "there is no product with that id" });
-  res.status(200).json({ status: "success", data: { product } });
 });
 
 router.put(
