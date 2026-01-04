@@ -1,4 +1,5 @@
 const { expressjwt } = require("express-jwt");
+const jwt = require("jsonwebtoken");
 const dotenv = require("dotenv");
 const User = require("./../models/user");
 dotenv.config({ path: "./.env" });
@@ -32,8 +33,10 @@ const isRevoked = async (req, token) => {
   if (!token.payload.isAdmin) return true;
 };
 
-const getToken = (req) => {
+const getToken = async (req) => {
   if (req.cookies && req.cookies.token) {
+    console.log(await User.findById(jwt.decode(req.cookies.token).id));
+
     return req.cookies.token;
   }
   return null;

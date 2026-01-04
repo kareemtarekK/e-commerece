@@ -1,26 +1,12 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const Category = require("./../models/category");
+const adminOnly = require("./../helpers/adminOnly");
 const router = express.Router();
 
 router.get("/", async (req, res) => {
   const categories = await Category.find();
   res.send(categories);
-});
-
-router.post("/", async (req, res) => {
-  const category = new Category({
-    name: req.body.name,
-    icon: req.body.icon,
-    color: req.body.color,
-  });
-  await category.save();
-  res.status(201).json({
-    status: "success",
-    data: {
-      category,
-    },
-  });
 });
 
 router.get("/:id", async (req, res) => {
@@ -37,6 +23,23 @@ router.get("/:id", async (req, res) => {
       .status(404)
       .json({ message: "there is no category with that id" });
   res.status(200).json({ category });
+});
+
+router.use(adminOnly);
+
+router.post("/", async (req, res) => {
+  const category = new Category({
+    name: req.body.name,
+    icon: req.body.icon,
+    color: req.body.color,
+  });
+  await category.save();
+  res.status(201).json({
+    status: "success",
+    data: {
+      category,
+    },
+  });
 });
 
 router.put("/:id", async (req, res) => {

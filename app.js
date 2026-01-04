@@ -31,11 +31,11 @@ mongoose
 
 // middlewares
 app.use(cookieParser());
+app.use(expressjwt.authJwt());
 app.use(morgan("tiny"));
 app.use(bodyParser.json());
 app.use(cors());
 app.options(/.*/, cors());
-app.use(expressjwt.authJwt());
 
 app.use("/public", express.static(path.join(__dirname, "/public")));
 app.use(`${API}/users`, userRouter);
