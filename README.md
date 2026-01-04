@@ -18,7 +18,7 @@ It supports:
 
 ```bash
 # Clone the repo
-git clone <e-commerece>
+git clone <https://github.com/kareemtarekK/e-commerece.git>
 cd your-project
 
 # Install dependencies
