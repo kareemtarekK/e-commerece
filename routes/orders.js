@@ -3,6 +3,7 @@ const mongoose = require("mongoose");
 const jwt = require("jsonwebtoken");
 const Order = require("./../models/order");
 const OrderItem = require("./../models/orderItem");
+const adminOnly = require("./../helpers/adminOnly");
 
 const router = express.Router();
 
@@ -101,6 +102,48 @@ router.get("/:id", async (req, res) => {
   });
 });
 
+router.get("/get/count", async (req, res) => {
+  const count = await Order.countDocuments();
+  res.status(200).json({
+    status: "success",
+    data: {
+      count,
+    },
+  });
+});
+
+router.get("/get/all/:user", async (req, res) => {
+  const orders = await Order.find({ user: req.params.user })
+    .populate("user", "name")
+    .sort({ dateOrdered: -1 });
+  res.status(200).json({
+    status: "success",
+    data: {
+      orders,
+    },
+  });
+});
+
+router.use(adminOnly);
+
+router.get("/get/salesOrder", async (req, res) => {
+  const sales = await Order.aggregate([
+    {
+      $group: {
+        _id: null,
+        sales: { $sum: "$totalPrice" },
+        orderCount: { $sum: 1 },
+      },
+    },
+  ]);
+  res.status(200).json({
+    status: "success",
+    data: {
+      sales: { ...sales.pop(), _id: undefined },
+    },
+  });
+});
+
 router.delete("/:id", async (req, res) => {
   const { id } = req.params;
   if (!id)
@@ -164,46 +207,6 @@ router.put("/:id", async (req, res) => {
     status: "success",
     data: {
       order: updatedOrder,
-    },
-  });
-});
-
-router.get("/get/count", async (req, res) => {
-  const count = await Order.countDocuments();
-  res.status(200).json({
-    status: "success",
-    data: {
-      count,
-    },
-  });
-});
-
-router.get("/get/salesOrder", async (req, res) => {
-  const sales = await Order.aggregate([
-    {
-      $group: {
-        _id: null,
-        sales: { $sum: "$totalPrice" },
-        orderCount: { $sum: 1 },
-      },
-    },
-  ]);
-  res.status(200).json({
-    status: "success",
-    data: {
-      sales: { ...sales.pop(), _id: undefined },
-    },
-  });
-});
-
-router.get("/get/all/:user", async (req, res) => {
-  const orders = await Order.find({ user: req.params.user })
-    .populate("user", "name")
-    .sort({ dateOrdered: -1 });
-  res.status(200).json({
-    status: "success",
-    data: {
-      orders,
     },
   });
 });
