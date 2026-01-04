@@ -2,13 +2,8 @@ const express = require("express");
 const mongoose = require("mongoose");
 const jwt = require("jsonwebtoken");
 const User = require("./../models/user");
+const adminOnly = require("./../helpers/adminOnly");
 const router = express.Router();
-
-router.get("/", async (req, res) => {
-  const filter = req.query;
-  const users = await User.find(filter).select("-passwordHash");
-  res.status(200).send(users);
-});
 
 router.post("/", async (req, res) => {
   const checkedUser = await User.findOne({ email: req.body.email });
@@ -35,6 +30,50 @@ router.post("/", async (req, res) => {
       user,
     },
   });
+});
+
+router.post("/login", async (req, res) => {
+  const { email, password } = req.body;
+  if (!email || !password)
+    return res.status(400).json({
+      status: "success",
+      message: "provide email and password",
+    });
+  const user = await User.findOne({ email });
+  // if (!user)
+  //   return res.status(404).json({ status: "fail", message: "incorrect email" });
+  if (!user || !(await user.comparePassword(password, user.passwordHash))) {
+    return res.status(400).json({
+      status: "fail",
+      message: "email or password is incorrect",
+    });
+  }
+  const token = jwt.sign(
+    { id: user.id, isAdmin: user.isAdmin },
+    process.env.SECRET,
+    {
+      expiresIn: process.env.EXPIRESIN,
+    }
+  );
+
+  res.cookie("token", token, {
+    httpOnly: true,
+    secure: false,
+    maxAge: 24 * 60 * 60 * 1000,
+  });
+  res.status(200).json({
+    status: "success",
+    message: "login successfully",
+    token,
+  });
+});
+
+router.use(adminOnly);
+
+router.get("/", async (req, res) => {
+  const filter = req.query;
+  const users = await User.find(filter).select("-passwordHash");
+  res.status(200).send(users);
 });
 
 router.get("/:id", async (req, res) => {
@@ -115,42 +154,6 @@ router.delete("/:id", async (req, res) => {
     data: {
       user: deletedUser,
     },
-  });
-});
-
-router.post("/login", async (req, res) => {
-  const { email, password } = req.body;
-  if (!email || !password)
-    return res.status(400).json({
-      status: "success",
-      message: "provide email and password",
-    });
-  const user = await User.findOne({ email });
-  // if (!user)
-  //   return res.status(404).json({ status: "fail", message: "incorrect email" });
-  if (!user || !(await user.comparePassword(password, user.passwordHash))) {
-    return res.status(400).json({
-      status: "fail",
-      message: "email or password is incorrect",
-    });
-  }
-  const token = jwt.sign(
-    { id: user.id, isAdmin: user.isAdmin },
-    process.env.SECRET,
-    {
-      expiresIn: process.env.EXPIRESIN,
-    }
-  );
-
-  res.cookie("token", token, {
-    httpOnly: true,
-    secure: false,
-    maxAge: 24 * 60 * 60 * 1000,
-  });
-  res.status(200).json({
-    status: "success",
-    message: "login successfully",
-    token,
   });
 });
 
